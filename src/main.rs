@@ -1,24 +1,42 @@
 use std::env;
 use std::io;
 use std::io::BufRead;
-struct Editor {
+use std::fs::File;
 
-}
+struct Editor;
 impl Editor {
-    fn edit_file(&self, file: &str) {
-
+    fn edit_file(path: &str) {
+        //println!("Planning to edit file {}", file);
+        let file_test = File::open(path.trim_end());
+        let file: File;
+        match file_test {
+            Err(_) => {
+                let res = File::create(path.trim_end());
+                match res {
+                    Ok(out) => {file = out;}
+                    Err(err) => { 
+                        println!("Failed to create file, err: {}", err);
+                        println!("\nBeing given input value: ");
+                        dbg!(path);
+                    }
+                }
+            }
+            Ok(out) => {
+                file = out;
+            }
+        }
     }
-    fn start(&self, args: Vec<String>) {
+    fn start(args: Vec<String>) {
         if args.len() <= 1 {
         // path with no inputted file
             println!("Input the name and path of the file");
-            let mut input = &mut String::new();
+            let input = &mut String::new();
             let stdin = io::stdin();
             let result = stdin.read_line(input);
             //println!("You inputted: {}", input);
             match result {
-                Ok(output) => {
-                    self.edit_file(input.as_str());
+                Ok(_) => {
+                    Editor::edit_file(input.as_str());
                 }
                 Err(output) => {
                     println!("File input failed, stopping process");
@@ -36,7 +54,7 @@ impl Editor {
                     return;
                 }
                 Some(x) =>{
-                    self.edit_file(x.as_str());
+                    Editor::edit_file(x);
                 }
             }
         }
@@ -46,6 +64,5 @@ impl Editor {
 
 fn main() {
     let args: Vec<String> = env::args().collect();
-    let editor: Editor = Editor{};
-    editor.start(args);
+    Editor::start(args);
 }
