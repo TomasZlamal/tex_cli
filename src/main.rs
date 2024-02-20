@@ -1,14 +1,23 @@
-use std::env;
-use std::io;
-use std::io::BufRead;
+use std::{env, io, str};
 use std::fs::File;
+use std::io::{stdout, Write, Read};
+use std::thread;
+use std::time::Duration;
 
+use crossterm::{
+    cursor::{Hide, MoveTo, Show, self},
+    execute,
+    style::{Color, Print, ResetColor, SetBackgroundColor, SetForegroundColor},
+    ExecutableCommand,
+    event,
+    QueueableCommand
+};
 struct Editor;
 impl Editor {
     fn edit_file(path: &str) {
         //println!("Planning to edit file {}", file);
         let file_test = File::open(path.trim_end());
-        let file: File;
+        let mut file: File;
         match file_test {
             Err(_) => {
                 let res = File::create(path.trim_end());
@@ -26,7 +35,26 @@ impl Editor {
                 file = out;
             }
         }
-
+        Editor::crossterm_interface(file);
+    }
+    fn crossterm_interface(mut file: File) -> std::io::Result<()>{
+        let mut stdout = stdout();
+        let mut buffer = Vec::new();
+        file.read_to_end(&mut buffer);
+        let buffer = match str::from_utf8(&buffer) {
+            Ok(s) => s,
+            Err(_) => return Err(io::Error::new(io::ErrorKind::InvalidData, "Invalid UTF-8 sequence")),
+        };
+        execute!(
+            stdout,
+            SetForegroundColor(Color::Blue),
+            //SetBackgroundColor(Color::Red),
+            Print(buffer),
+            ResetColor
+        )?; 
+        stdout.queue(cursor::MoveTo(0, 0)).unwrap();
+        thread::sleep(Duration::from_secs(5));
+        Ok(())
     }
     fn start(args: Vec<String>) {
         if args.len() <= 1 {
