@@ -1,16 +1,19 @@
 use std::{env, io, str};
 use std::fs::File;
-use std::io::{stdout, Write, Read};
+use std::io::{stdout, Write, Read, Result};
 use std::thread;
 use std::time::Duration;
-
 use crossterm::{
-    cursor::{Hide, MoveTo, Show, self},
-    execute,
-    style::{Color, Print, ResetColor, SetBackgroundColor, SetForegroundColor},
+    event::{self, KeyCode, KeyEventKind},
+    terminal::{
+        disable_raw_mode, enable_raw_mode, EnterAlternateScreen,
+        LeaveAlternateScreen,
+    },
     ExecutableCommand,
-    event,
-    QueueableCommand
+};
+use ratatui::{
+    prelude::{CrosstermBackend, Stylize, Terminal},
+    widgets::Paragraph,
 };
 struct Editor;
 impl Editor {
@@ -38,22 +41,50 @@ impl Editor {
         Editor::crossterm_interface(file);
     }
     fn crossterm_interface(mut file: File) -> std::io::Result<()>{
-        let mut stdout = stdout();
+        /*let mut stdout = stdout();
+        stdout.queue(terminal::Clear(ClearType::All));
+        stdout.flush();*/
         let mut buffer = Vec::new();
         file.read_to_end(&mut buffer);
         let buffer = match str::from_utf8(&buffer) {
             Ok(s) => s,
             Err(_) => return Err(io::Error::new(io::ErrorKind::InvalidData, "Invalid UTF-8 sequence")),
         };
-        execute!(
+       /*execute!(
             stdout,
             SetForegroundColor(Color::Blue),
             //SetBackgroundColor(Color::Red),
             Print(buffer),
             ResetColor
         )?; 
-        stdout.queue(cursor::MoveTo(0, 0)).unwrap();
-        thread::sleep(Duration::from_secs(5));
+                stdout.queue(cursor::MoveTo(0, 0)).unwrap();
+        stdout.flush();*/
+        stdout().execute(EnterAlternateScreen);
+        enable_raw_mode()?;
+        let mut terminal = Terminal::new(CrosstermBackend::new(stdout()))?;
+        terminal.clear()?; 
+        loop {
+            terminal.draw(|frame| {
+                let area = frame.size();
+                frame.render_widget(
+                    Paragraph::new("Hello Ratatui! (press 'q' to quit)")
+                        .white()
+                        .on_blue(),
+                    area,
+                );
+            })?;
+            if event::poll(std::time::Duration::from_millis(16))? {
+                if let event::Event::Key(key) = event::read()? {
+                    if key.kind == KeyEventKind::Press
+                        && key.code == KeyCode::Char('q')
+                    {
+                        break;
+                    }
+                }
+            }
+        }
+        stdout().execute(LeaveAlternateScreen)?;
+        disable_raw_mode()?;
         Ok(())
     }
     fn start(args: Vec<String>) {
