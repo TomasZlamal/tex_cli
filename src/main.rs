@@ -67,7 +67,7 @@ impl Editor {
             terminal.draw(|frame| {
                 let area = frame.size();
                 frame.render_widget(
-                    Paragraph::new("Hello Ratatui! (press 'q' to quit)")
+                    Paragraph::new(buffer)
                         .white()
                         .on_blue(),
                     area,
@@ -76,9 +76,9 @@ impl Editor {
             if event::poll(std::time::Duration::from_millis(16))? {
                 if let event::Event::Key(key) = event::read()? {
                     if key.kind == KeyEventKind::Press
-                        && key.code == KeyCode::Char('q')
+                        && key.code == KeyCode::F(1)
                     {
-                        break;
+                       break; 
                     }
                 }
             }
