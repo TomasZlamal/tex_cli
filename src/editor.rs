@@ -1,4 +1,3 @@
-pub mod editor;
 use std::{io, str};
 
 use std::fs::File;
