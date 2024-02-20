@@ -1,5 +1,5 @@
 mod include;
-use crate::include::Editor;
+use crate::include::editor::editor::Editor;
 use std::env;
 
 fn main() {
