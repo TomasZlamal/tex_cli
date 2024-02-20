@@ -18,6 +18,7 @@ impl Editor {
                         println!("Failed to create file, err: {}", err);
                         println!("\nBeing given input value: ");
                         dbg!(path);
+                        return;
                     }
                 }
             }
@@ -25,6 +26,7 @@ impl Editor {
                 file = out;
             }
         }
+
     }
     fn start(args: Vec<String>) {
         if args.len() <= 1 {
