@@ -1,13 +1,13 @@
 use crate::include::editor::app::App;
 
-pub fn handle_inputs(app: &mut App) {
+pub fn handle_inputs(app: &mut App) -> bool {
     if event::poll(std::time::Duration::from_millis(16))? {
                 if let event::Event::Key(key) = event::read()? {
                     if key.kind == KeyEventKind::Press {
                         //dbg!(app.current_size);
                         match key.code {
                             KeyCode::F(1) => {
-                                break;
+                                return false;
                             },
                             KeyCode::Right => {
                                 if app.cursor_letter < app.current_size.right() {
@@ -35,4 +35,5 @@ pub fn handle_inputs(app: &mut App) {
                     
                 }
             }
+    return true;
 }

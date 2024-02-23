@@ -56,7 +56,9 @@ impl Editor {
         app.buffer = String::from(buffer);
         loop {
             terminal.draw(|f| ui(f, &mut app))?;
-            inputs::handle_inputs(&mut app);
+            if !inputs::handle_inputs(&mut app) {
+                break;
+            }
         }
         stdout().execute(LeaveAlternateScreen)?;
         disable_raw_mode()?;
