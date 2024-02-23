@@ -2,20 +2,17 @@ use std::{io, str};
 use std::fs::File;
 use std::io::{stdout, Write, Read, Result};
 use crossterm::{
-    event::{self, KeyCode, KeyEventKind},
     terminal::{
         disable_raw_mode, enable_raw_mode, EnterAlternateScreen,
         LeaveAlternateScreen,
     },
     ExecutableCommand,
 };
-use ratatui::{
-    prelude::{CrosstermBackend, Stylize, Terminal},
-    widgets::Paragraph,
-};
-use crate::include::editor::{ui::ui, app::App, inputs::handle_inputs};
+use ratatui::prelude::{CrosstermBackend, Terminal};
+use crate::include::editor::{ui::ui, app::App};
 
 use super::inputs;
+use super::signals::Signal;
 pub struct Editor;
 impl Editor {
     fn edit_file(path: &str) {
@@ -39,16 +36,21 @@ impl Editor {
                 file = out;
             }
         }
-        Editor::interface(file);
+        match Editor::interface(file) {
+            Ok(_) => {},
+            Err(x) => {
+                println!("Error: {}", x)
+            },
+        }
     }
     fn interface(mut file: File) -> std::io::Result<()>{
         let mut buffer = Vec::new();
-        file.read_to_end(&mut buffer);
+        file.read_to_end(&mut buffer)?;
         let buffer = match str::from_utf8(&buffer) {
             Ok(s) => s,
             Err(_) => return Err(io::Error::new(io::ErrorKind::InvalidData, "Invalid UTF-8 sequence")),
         };
-        stdout().execute(EnterAlternateScreen);
+        stdout().execute(EnterAlternateScreen)?;
         enable_raw_mode()?;
         let mut terminal = Terminal::new(CrosstermBackend::new(stdout()))?;
         terminal.clear()?; 
@@ -56,8 +58,16 @@ impl Editor {
         app.buffer = String::from(buffer);
         loop {
             terminal.draw(|f| ui(f, &mut app))?;
-            if !inputs::handle_inputs(&mut app) {
-                break;
+            match inputs::handle_inputs(&mut app) {
+               Ok(signal) => {
+                   match signal {
+                      Signal::Quit => {
+                          break;
+                      },
+                      Signal::Continue => { continue;},
+                   }
+               } 
+               Err(_) => {}
             }
         }
         stdout().execute(LeaveAlternateScreen)?;

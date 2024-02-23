@@ -13,7 +13,7 @@ use ratatui::widgets::Paragraph;
 // cursor_letter: indexed from 0, defined where the cursor is hovering
 pub struct App {
     pub buffer: String,
-    state: AppState,
+    pub state: AppState,
     pub cursor_line: u16,
     pub cursor_letter: u16,
     pub current_size: Rect,
